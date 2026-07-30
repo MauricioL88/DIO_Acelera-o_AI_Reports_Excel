@@ -1,0 +1,1692 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meus Proventos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --bg-primary: #0f0f1a;
+      --bg-secondary: #1a1a2e;
+      --bg-card: rgba(255, 255, 255, 0.05);
+      --bg-card-hover: rgba(255, 255, 255, 0.08);
+      --text-primary: #f0f0f5;
+      --text-secondary: #a0a0b8;
+      --text-muted: #6b6b80;
+      --accent-1: #6c63ff;
+      --accent-2: #ff6584;
+      --accent-3: #00d4aa;
+      --accent-4: #fbbf24;
+      --glow-1: rgba(108, 99, 255, 0.3);
+      --glow-2: rgba(255, 101, 132, 0.3);
+      --glow-3: rgba(0, 212, 170, 0.3);
+      --border: rgba(255, 255, 255, 0.08);
+      --gradient: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 30%, #16213e 60%, #0f0f1a 100%);
+      --shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      --chart-bg: rgba(255, 255, 255, 0.02);
+      --filter-bg: rgba(255, 255, 255, 0.06);
+      --input-bg: rgba(255, 255, 255, 0.08);
+      --input-border: rgba(255, 255, 255, 0.12);
+      --table-stripe: rgba(255, 255, 255, 0.02);
+      --table-hover: rgba(255, 255, 255, 0.05);
+    }
+
+    [data-theme="light"] {
+      --bg-primary: #f5f5fa;
+      --bg-secondary: #ffffff;
+      --bg-card: rgba(0, 0, 0, 0.03);
+      --bg-card-hover: rgba(0, 0, 0, 0.05);
+      --text-primary: #1a1a2e;
+      --text-secondary: #555570;
+      --text-muted: #8888a0;
+      --border: rgba(0, 0, 0, 0.08);
+      --gradient: linear-gradient(135deg, #f5f5fa 0%, #e8e8f0 30%, #ddddf5 60%, #f5f5fa 100%);
+      --shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+      --chart-bg: rgba(0, 0, 0, 0.02);
+      --filter-bg: rgba(0, 0, 0, 0.04);
+      --input-bg: rgba(255, 255, 255, 0.8);
+      --input-border: rgba(0, 0, 0, 0.15);
+      --table-stripe: rgba(0, 0, 0, 0.02);
+      --table-hover: rgba(0, 0, 0, 0.04);
+    }
+
+    *,
+    *::before,
+    *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--gradient);
+      background-attachment: fixed;
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.6;
+      transition: background 0.5s ease, color 0.3s ease;
+    }
+
+    ::selection {
+      background: var(--accent-1);
+      color: #fff;
+    }
+
+    .container {
+      max-width: 1360px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    /* Header */
+    .header {
+      padding: 24px 0 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(20px);
+      background: rgba(15, 15, 26, 0.7);
+      border-bottom: 1px solid var(--border);
+      transition: background 0.3s;
+    }
+
+    [data-theme="light"] .header {
+      background: rgba(245, 245, 250, 0.85);
+    }
+
+    .header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .header-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-title h1 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header-title .icon {
+      font-size: 1.6rem;
+      -webkit-text-fill-color: initial;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Theme Toggle */
+    .theme-toggle {
+      background: var(--filter-bg);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+
+    .theme-toggle:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 20px var(--glow-1);
+    }
+
+    /* Upload Button */
+    .upload-btn {
+      background: linear-gradient(135deg, var(--accent-1), #8b83ff);
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 12px;
+      font-family: inherit;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .upload-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px var(--glow-1);
+    }
+
+    /* Filters */
+    .filters {
+      padding: 16px 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .filter-group {
+      position: relative;
+    }
+
+    .filter-group select {
+      appearance: none;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      color: var(--text-primary);
+      padding: 9px 36px 9px 14px;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      min-width: 130px;
+      max-width: 200px;
+    }
+
+    .filter-group select:hover {
+      border-color: var(--accent-1);
+      box-shadow: 0 0 12px var(--glow-1);
+    }
+
+    .filter-group::after {
+      content: '\25BE';
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      pointer-events: none;
+      font-size: 0.9rem;
+    }
+
+    .filter-group select option {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+    }
+
+    .btn-clear {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 9px 16px;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn-clear:hover {
+      border-color: var(--accent-2);
+      color: var(--accent-2);
+      box-shadow: 0 0 12px var(--glow-2);
+    }
+
+    /* Import Section */
+    .import-section {
+      margin: 16px 0;
+    }
+
+    .import-area {
+      border: 2px dashed var(--border);
+      border-radius: 16px;
+      padding: 40px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: var(--bg-card);
+    }
+
+    .import-area:hover,
+    .import-area.dragover {
+      border-color: var(--accent-1);
+      background: var(--bg-card-hover);
+      box-shadow: 0 0 40px var(--glow-1);
+    }
+
+    .import-area .icon {
+      font-size: 2.5rem;
+      margin-bottom: 8px;
+    }
+
+    .import-area h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .import-area p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* KPI Cards */
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+      margin: 16px 0;
+    }
+
+    .kpi-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px 20px;
+      transition: all 0.4s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent-1), var(--accent-2));
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .kpi-card:hover::before {
+      opacity: 1;
+    }
+
+    .kpi-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 32px var(--glow-1);
+    }
+
+    .kpi-card .label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .kpi-card .value {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+
+    .kpi-card .sub {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    /* Charts Grid */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 16px;
+      margin: 16px 0;
+    }
+
+    .chart-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      transition: all 0.3s ease;
+    }
+
+    .chart-card:hover {
+      box-shadow: 0 8px 32px var(--glow-1);
+      border-color: rgba(108, 99, 255, 0.2);
+    }
+
+    .chart-card h3 {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+      letter-spacing: 0.02em;
+    }
+
+    .chart-wrapper {
+      position: relative;
+      width: 100%;
+    }
+
+    .chart-wrapper canvas {
+      max-width: 100%;
+    }
+
+    /* Donut row */
+    .donut-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 16px 0;
+    }
+
+    /* Tables */
+    .tables-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 16px 0;
+    }
+
+    .table-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .table-card:hover {
+      box-shadow: 0 8px 32px var(--glow-1);
+    }
+
+    .table-card h3 {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+      letter-spacing: 0.02em;
+    }
+
+    .table-card table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+
+    .table-card th {
+      text-align: left;
+      padding: 8px 10px;
+      font-weight: 600;
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .table-card td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-primary);
+    }
+
+    .table-card tr:nth-child(even) td {
+      background: rgba(255, 255, 255, 0.015);
+    }
+
+    .table-card tr:hover td {
+      background: var(--table-hover);
+    }
+
+    .table-card .valor {
+      text-align: right;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .table-card .rank {
+      width: 28px;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .rank-1 {
+      color: #fbbf24 !important;
+    }
+
+    .rank-2 {
+      color: #94a3b8 !important;
+    }
+
+    .rank-3 {
+      color: #d97706 !important;
+    }
+
+    /* Top per category */
+    .per-category {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+      margin: 16px 0;
+    }
+
+    .cat-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      transition: all 0.3s ease;
+      text-align: center;
+    }
+
+    .cat-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 24px var(--glow-1);
+    }
+
+    .cat-card .cat-label {
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .cat-card .cat-asset {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--accent-1);
+    }
+
+    .cat-card .cat-desc {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin: 2px 0;
+    }
+
+    .cat-card .cat-value {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--accent-3);
+      margin-top: 4px;
+    }
+
+    .ano-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 12px;
+      margin: 16px 0;
+    }
+
+    .ano-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .ano-card:hover {
+      transform: scale(1.03);
+      box-shadow: 0 4px 20px var(--glow-1);
+    }
+
+    .ano-card .ano-year {
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: var(--accent-4);
+    }
+
+    .ano-card .ano-asset {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--accent-1);
+    }
+
+    .ano-card .ano-value {
+      font-size: 0.8rem;
+      color: var(--accent-3);
+      font-weight: 600;
+    }
+
+    /* Data Table */
+    .data-table-section {
+      margin: 16px 0;
+    }
+
+    .data-table-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      overflow-x: auto;
+    }
+
+    .data-table-card h3 {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+
+    .data-table-card table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.75rem;
+      min-width: 700px;
+    }
+
+    .data-table-card th {
+      text-align: left;
+      padding: 8px 10px;
+      font-weight: 600;
+      color: var(--text-muted);
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: var(--bg-secondary);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .data-table-card th:hover {
+      color: var(--accent-1);
+    }
+
+    .data-table-card td {
+      padding: 7px 10px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    .data-table-card tr:nth-child(even) td {
+      background: var(--table-stripe);
+    }
+
+    .data-table-card tr:hover td {
+      background: var(--table-hover);
+    }
+
+    /* Animations */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes glowPulse {
+
+      0%,
+      100% {
+        box-shadow: 0 0 20px var(--glow-1);
+      }
+
+      50% {
+        box-shadow: 0 0 40px var(--glow-1), 0 0 60px var(--glow-2);
+      }
+    }
+
+    .glow-pulse {
+      animation: glowPulse 4s ease-in-out infinite;
+    }
+
+    .animate-in {
+      animation: fadeInUp 0.6s ease forwards;
+    }
+
+    .animate-in-d1 {
+      animation-delay: 0.05s;
+    }
+
+    .animate-in-d2 {
+      animation-delay: 0.1s;
+    }
+
+    .animate-in-d3 {
+      animation-delay: 0.15s;
+    }
+
+    .animate-in-d4 {
+      animation-delay: 0.2s;
+    }
+
+    .animate-in-d5 {
+      animation-delay: 0.25s;
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .charts-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .donut-row {
+        grid-template-columns: 1fr;
+      }
+
+      .tables-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .kpis {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 600px) {
+      .header-inner {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .header-actions {
+        justify-content: space-between;
+      }
+
+      .header-title h1 {
+        font-size: 1.2rem;
+      }
+
+      .kpis {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .kpi-card {
+        padding: 14px;
+      }
+
+      .kpi-card .value {
+        font-size: 1.2rem;
+      }
+
+      .filters {
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .filter-group {
+        width: 100%;
+      }
+
+      .filter-group select {
+        width: 100%;
+        min-width: 0;
+        max-width: none;
+        padding: 10px 36px 10px 12px;
+        font-size: 0.85rem;
+      }
+
+      .btn-clear {
+        width: 100%;
+        text-align: center;
+        padding: 10px;
+      }
+
+      .charts-grid,
+      .donut-row,
+      .tables-grid {
+        gap: 12px;
+      }
+
+      .per-category {
+        grid-template-columns: 1fr;
+      }
+
+      .ano-cards {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .import-area {
+        padding: 24px 16px;
+      }
+
+      .upload-btn { padding: 10px 14px; font-size: 0.8rem; }
+    }
+
+    @media (max-width: 400px) {
+      .kpis {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .filter-group select {
+        font-size: 0.8rem;
+        padding: 10px 32px 10px 10px;
+      }
+
+      .per-category {
+        grid-template-columns: 1fr;
+      }
+
+      .ano-cards {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--text-muted);
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--accent-1);
+    }
+
+    /* Loading */
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-muted);
+    }
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent-1);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 12px;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+
+    .empty-state .icon {
+      font-size: 3rem;
+      margin-bottom: 12px;
+    }
+
+    .empty-state h2 {
+      font-size: 1.2rem;
+      margin-bottom: 6px;
+      color: var(--text-secondary);
+    }
+
+    .empty-state p {
+      font-size: 0.85rem;
+    }
+
+    /* Responsive charts */
+    .chart-wrapper {
+      min-height: 250px;
+    }
+
+    /* Section titles */
+    .section-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 20px 0 8px;
+      letter-spacing: 0.02em;
+    }
+
+    .section-subtitle {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="header" id="header">
+    <div class="container header-inner">
+      <div class="header-title">
+        <span class="icon">&#x1F4B0;</span>
+        <h1>Meus Proventos</h1>
+      </div>
+      <div class="header-actions">
+        <button class="upload-btn" id="uploadBtn" onclick="document.getElementById('fileInput').click()">
+          <span>&#x1F4C1;</span>
+          <span>Importar Dados</span>
+        </button>
+        <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Alternar tema">&#x263E;</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="container" id="app">
+    <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none" onchange="handleFileUpload(event)">
+
+    <div class="filters" id="filtersSection">
+      <div class="filter-group">
+        <select id="filterCodigo">
+          <option value="">Código</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <select id="filterAno">
+          <option value="">Ano</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <select id="filterMes">
+          <option value="">Mês</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <select id="filterTipo">
+          <option value="">Tipo do Evento</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <select id="filterInstituicao">
+          <option value="">Instituição</option>
+        </select>
+      </div>
+      <button class="btn-clear" onclick="clearFilters()">Limpar Filtros</button>
+    </div>
+
+    <div class="import-section" id="importSection">
+      <div class="import-area" id="importArea" onclick="document.getElementById('fileInput').click()">
+        <div class="icon">&#x1F4C4;</div>
+        <h3>Carregar Planilha Excel</h3>
+        <p>Arraste o arquivo ou clique para selecionar <strong>projetoProventoDio.xlsx</strong></p>
+      </div>
+    </div>
+
+    <div id="dashboardContent" style="display:none">
+      <div class="kpis" id="kpisSection">
+        <div class="kpi-card animate-in animate-in-d1">
+          <div class="label">Valor Total</div>
+          <div class="value" id="kpiTotal">R$ 0,00</div>
+          <div class="sub" id="kpiTotalReg">0 registros</div>
+        </div>
+        <div class="kpi-card animate-in animate-in-d2">
+          <div class="label">Ativo Destaque</div>
+          <div class="value" id="kpiTopAtivo">-</div>
+          <div class="sub" id="kpiTopAtivoVal">R$ 0,00</div>
+        </div>
+        <div class="kpi-card animate-in animate-in-d3">
+          <div class="label">Instituição Destaque</div>
+          <div class="value" id="kpiTopInst">-</div>
+          <div class="sub" id="kpiTopInstVal">R$ 0,00</div>
+        </div>
+        <div class="kpi-card animate-in animate-in-d4">
+          <div class="label">Média por Mês</div>
+          <div class="value" id="kpiMedia">R$ 0,00</div>
+          <div class="sub" id="kpiPeriodo">-</div>
+        </div>
+      </div>
+
+      <div class="section-title">Top Ativos &amp; Corretoras</div>
+      <div class="tables-grid">
+        <div class="table-card animate-in animate-in-d1">
+          <h3>&#x1F3C6; 5 Ativos que mais pagaram</h3>
+          <table>
+            <thead>
+              <tr>
+                <th class="rank">#</th>
+                <th>Código</th>
+                <th>Descrição</th>
+                <th class="valor">Valor</th>
+              </tr>
+            </thead>
+            <tbody id="topAtivosBody"></tbody>
+          </table>
+        </div>
+        <div class="table-card animate-in animate-in-d2">
+          <h3>&#x1F3E6; 3 Corretoras que mais receberam</h3>
+          <table>
+            <thead>
+              <tr>
+                <th class="rank">#</th>
+                <th>Instituição</th>
+                <th class="valor">Valor</th>
+              </tr>
+            </thead>
+            <tbody id="topCorretorasBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="section-title">Ativo que mais pagou por Tipo de Evento</div>
+      <div class="per-category" id="porTipoContainer"></div>
+
+      <div class="section-title">Ativo que mais pagou por Ano</div>
+      <div class="ano-cards" id="porAnoContainer"></div>
+
+      <div class="section-title">Distribuição por Tipo &amp; Instituição</div>
+      <div class="donut-row">
+        <div class="chart-card animate-in animate-in-d1">
+          <h3>&#x1F4CA; Por Tipo de Evento</h3>
+          <div class="chart-wrapper"><canvas id="donutTipo"></canvas></div>
+        </div>
+        <div class="chart-card animate-in animate-in-d2">
+          <h3>&#x1F4CA; Por Instituição</h3>
+          <div class="chart-wrapper"><canvas id="donutInst"></canvas></div>
+        </div>
+      </div>
+
+      <div class="section-title">Progressão de Valores</div>
+      <div class="charts-grid">
+        <div class="filter-group" style="margin-bottom:8px">
+          <select id="lineFilterAno" onchange="updateLineChart()">
+            <option value="">Todos os Anos</option>
+          </select>
+        </div>
+        <div class="chart-card" style="grid-column:1/-1">
+          <h3>&#x1F4C8; Progressão de Rendimentos</h3>
+          <div class="chart-wrapper"><canvas id="lineChart"></canvas></div>
+        </div>
+      </div>
+
+      <div class="section-title">Dados Detalhados</div>
+      <div class="data-table-section">
+        <div class="data-table-card">
+          <h3>&#x1F4CB; Todos os Registros</h3>
+          <div style="overflow-x:auto">
+            <table>
+              <thead>
+                <tr id="dataTableHead"></tr>
+              </thead>
+              <tbody id="dataTableBody"></tbody>
+            </table>
+          </div>
+          <div id="dataTablePagination"
+            style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-size:0.8rem;color:var(--text-secondary)">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const MONTH_ORDER = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    const NORMALIZE_INST = {
+      'XP INVESTIMENTOS CCTVM S/A.': 'XP INVESTIMENTOS CCTVM S/A',
+      'XP INVESTIMENTOS CORRETORA DE CAMBIO TITULOS E VALORES MOBILIARIOS S/A': 'XP INVESTIMENTOS CCTVM S/A',
+      'NU INVESTIMENTOS S.A. - CTVM': 'NU INVEST CORRETORA DE VALORES S.A.',
+      'TORO CORRETORA DE TITULOS E VALORES MOBILIARIOS S/A': 'TORO CTVM LTDA'
+    };
+
+    let fullData = [];
+    let filteredData = [];
+    let charts = {};
+    let dataTablePage = 0;
+    let dataTableSort = { col: -1, asc: true };
+    const PAGE_SIZE = 15;
+
+    function normInst(v) { return NORMALIZE_INST[v] || v; }
+
+    function fmt(v) { return 'R$ ' + v.toFixed(2).replace('.', ','); }
+
+    function excelSerialToDate(serial) {
+      if (!serial || isNaN(serial)) return String(serial);
+      const d = new Date((serial - 25569) * 86400000);
+      return d.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+    }
+
+    function isDarkMode() {
+      return document.documentElement.getAttribute('data-theme') !== 'light';
+    }
+
+    // Theme
+    function toggleTheme() {
+      const t = document.documentElement.getAttribute('data-theme');
+      const next = t === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
+      document.getElementById('themeToggle').textContent = next === 'light' ? '\u2600' : '\u263E';
+      localStorage.setItem('theme', next);
+    }
+    if (localStorage.getItem('theme') === 'light') {
+      document.documentElement.setAttribute('data-theme', 'light');
+      document.getElementById('themeToggle').textContent = '\u2600';
+    }
+
+    // File upload
+    document.getElementById('importArea').addEventListener('dragover', e => {
+      e.preventDefault(); e.stopPropagation();
+      document.getElementById('importArea').classList.add('dragover');
+    });
+    document.getElementById('importArea').addEventListener('dragleave', e => {
+      e.preventDefault(); e.stopPropagation();
+      document.getElementById('importArea').classList.remove('dragover');
+    });
+    document.getElementById('importArea').addEventListener('drop', e => {
+      e.preventDefault(); e.stopPropagation();
+      document.getElementById('importArea').classList.remove('dragover');
+      const files = e.dataTransfer.files;
+      if (files.length > 0) processFile(files[0]);
+    });
+
+    function handleFileUpload(e) {
+      const file = e.target.files[0];
+      if (file) processFile(file);
+    }
+
+    function processFile(file) {
+      const area = document.getElementById('importArea');
+      area.innerHTML = '<div class="spinner"></div><p style="margin-top:8px">Carregando dados...</p>';
+
+      const reader = new FileReader();
+      reader.onload = function (ev) {
+        try {
+          const data = new Uint8Array(ev.target.result);
+          const wb = XLSX.read(data, { type: 'array' });
+          const ws = wb.Sheets[wb.SheetNames[0]];
+          const json = XLSX.utils.sheet_to_json(ws, { defval: '' });
+          if (json.length === 0) { alert('Planilha vazia.'); return; }
+          fullData = json.map(r => ({
+            Ano: String(r['Ano'] || r['ano'] || ''),
+            Mes: String(r['Mês'] || r['Mes'] || r['mês'] || r['mes'] || ''),
+            Codigo: String(r['Código'] || r['Codigo'] || r['código'] || r['codigo'] || '').trim(),
+            Descricao: String(r['Descrição'] || r['Descricao'] || r['descrição'] || r['descricao'] || ''),
+            Pagamento: String(r['Pagamento'] || r['pagamento'] || ''),
+            TipoEvento: String(r['Tipo de Evento'] || r['TipoEvento'] || r['tipo_evento'] || r['tipoevento'] || ''),
+            Instituicao: normInst(String(r['Instituição'] || r['Instituicao'] || r['instituição'] || r['instituicao'] || '')),
+            Quantidade: Number(r['Quantidade'] || r['quantidade'] || 0),
+            PrecoUnitario: Number(r['Preço unitário'] || r['Precounitario'] || r['preço_unitário'] || r['precounitario'] || 0),
+            ValorLiquido: Number(r['Valor líquido'] || r['Valorliquido'] || r['valor_líquido'] || r['valorliquido'] || r['Valor líquido'] || r['valor líquido'] || 0)
+          }));
+          applyData();
+        } catch (err) {
+          alert('Erro ao ler arquivo: ' + err.message);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function applyData() {
+      document.getElementById('importSection').style.display = 'none';
+      document.getElementById('dashboardContent').style.display = 'block';
+      populateFilters();
+      applyFilters();
+    }
+
+    // Load default data on page load
+    window.addEventListener('DOMContentLoaded', function () {
+      // Try to load the default xlsx via fetch
+      fetch('projetoProventoDio.xlsx')
+        .then(res => {
+          if (!res.ok) throw new Error('not found');
+          return res.arrayBuffer();
+        })
+        .then(buf => {
+          const data = new Uint8Array(buf);
+          const wb = XLSX.read(data, { type: 'array' });
+          const ws = wb.Sheets[wb.SheetNames[0]];
+          const json = XLSX.utils.sheet_to_json(ws, { defval: '' });
+          if (json.length === 0) return;
+          fullData = json.map(r => ({
+            Ano: String(r['Ano'] || ''),
+            Mes: String(r['Mês'] || r['Mes'] || ''),
+            Codigo: String(r['Código'] || r['Codigo'] || '').trim(),
+            Descricao: String(r['Descrição'] || r['Descricao'] || ''),
+            Pagamento: String(r['Pagamento'] || ''),
+            TipoEvento: String(r['Tipo de Evento'] || r['TipoEvento'] || ''),
+            Instituicao: normInst(String(r['Instituição'] || r['Instituicao'] || '')),
+            Quantidade: Number(r['Quantidade'] || 0),
+            PrecoUnitario: Number(r['Preço unitário'] || r['Precounitario'] || 0),
+            ValorLiquido: Number(r['Valor líquido'] || r['Valorliquido'] || r['Valor líquido'] || 0)
+          }));
+          applyData();
+        })
+        .catch(() => {
+          // File not found, show import section
+          document.getElementById('importSection').style.display = 'block';
+        });
+    });
+
+    function populateFilters() {
+      const cods = [...new Set(fullData.map(d => d.Codigo).filter(Boolean))].sort();
+      const anos = [...new Set(fullData.map(d => d.Ano).filter(Boolean))].sort();
+      const meses = [...new Set(fullData.map(d => d.Mes).filter(Boolean))].sort((a, b) => MONTH_ORDER.indexOf(a) - MONTH_ORDER.indexOf(b));
+      const tipos = [...new Set(fullData.map(d => d.TipoEvento).filter(Boolean))].sort();
+      const insts = [...new Set(fullData.map(d => d.Instituicao).filter(Boolean))].sort();
+
+      const sets = {
+        filterCodigo: cods,
+        filterAno: anos,
+        filterMes: meses,
+        filterTipo: tipos,
+        filterInstituicao: insts,
+        lineFilterAno: anos
+      };
+
+      Object.entries(sets).forEach(([id, values]) => {
+        const sel = document.getElementById(id);
+        const current = sel.value;
+        sel.innerHTML = '<option value="">' + sel.options[0].text + '</option>';
+        values.forEach(v => {
+          const opt = document.createElement('option');
+          opt.value = v;
+          opt.textContent = v;
+          sel.appendChild(opt);
+        });
+        if (current && values.includes(current)) sel.value = current;
+      });
+
+      document.querySelectorAll('#filtersSection select').forEach(s => {
+        s.addEventListener('change', applyFilters);
+      });
+    }
+
+    function getFilters() {
+      return {
+        codigo: document.getElementById('filterCodigo').value,
+        ano: document.getElementById('filterAno').value,
+        mes: document.getElementById('filterMes').value,
+        tipo: document.getElementById('filterTipo').value,
+        inst: document.getElementById('filterInstituicao').value
+      };
+    }
+
+    function applyFilters() {
+      const f = getFilters();
+      filteredData = fullData.filter(d => {
+        if (f.codigo && d.Codigo !== f.codigo) return false;
+        if (f.ano && d.Ano !== f.ano) return false;
+        if (f.mes && d.Mes !== f.mes) return false;
+        if (f.tipo && d.TipoEvento !== f.tipo) return false;
+        if (f.inst && d.Instituicao !== f.inst) return false;
+        return d.ValorLiquido > 0;
+      });
+      updateDashboard();
+    }
+
+    function clearFilters() {
+      document.querySelectorAll('#filtersSection select').forEach(s => s.value = '');
+      applyFilters();
+    }
+
+    function updateDashboard() {
+      const data = filteredData;
+      const total = data.reduce((s, d) => s + d.ValorLiquido, 0);
+      document.getElementById('kpiTotal').textContent = fmt(total);
+      document.getElementById('kpiTotalReg').textContent = data.length + ' registro' + (data.length !== 1 ? 's' : '');
+
+      // Por ativo
+      const byAtivo = {};
+      data.forEach(d => {
+        if (!byAtivo[d.Codigo]) byAtivo[d.Codigo] = { codigo: d.Codigo, descricao: d.Descricao, total: 0 };
+        byAtivo[d.Codigo].total += d.ValorLiquido;
+      });
+      const sortedAtivos = Object.values(byAtivo).sort((a, b) => b.total - a.total);
+
+      const topAtivo = sortedAtivos[0];
+      document.getElementById('kpiTopAtivo').textContent = topAtivo ? topAtivo.codigo : '-';
+      document.getElementById('kpiTopAtivoVal').textContent = topAtivo ? fmt(topAtivo.total) : 'R$ 0,00';
+
+      // Por instituicao
+      const byInst = {};
+      data.forEach(d => {
+        const k = d.Instituicao;
+        if (!byInst[k]) byInst[k] = { nome: k, total: 0 };
+        byInst[k].total += d.ValorLiquido;
+      });
+      const sortedInst = Object.values(byInst).sort((a, b) => b.total - a.total);
+
+      const topInst = sortedInst[0];
+      document.getElementById('kpiTopInst').textContent = topInst ? topInst.nome.substring(0, 25) + '...' : '-';
+      document.getElementById('kpiTopInstVal').textContent = topInst ? fmt(topInst.total) : 'R$ 0,00';
+
+      // Media por mes
+      const uniqueMonths = new Set(data.map(d => d.Ano + '-' + d.Mes));
+      const avg = uniqueMonths.size > 0 ? total / uniqueMonths.size : 0;
+      document.getElementById('kpiMedia').textContent = fmt(avg);
+      document.getElementById('kpiPeriodo').textContent = uniqueMonths.size + ' mês' + (uniqueMonths.size !== 1 ? 'es' : '');
+
+      // Top 5 ativos
+      const top5 = sortedAtivos.slice(0, 5);
+      document.getElementById('topAtivosBody').innerHTML = top5.map((a, i) =>
+        '<tr><td class="rank rank-' + (i + 1) + '">' + (i + 1) + '</td><td>' + a.codigo + '</td><td>' + (a.descricao || '-') + '</td><td class="valor">' + fmt(a.total) + '</td></tr>'
+      ).join('');
+
+      // Top 3 corretoras
+      const top3 = sortedInst.slice(0, 3);
+      document.getElementById('topCorretorasBody').innerHTML = top3.map((a, i) =>
+        '<tr><td class="rank rank-' + (i + 1) + '">' + (i + 1) + '</td><td>' + a.nome + '</td><td class="valor">' + fmt(a.total) + '</td></tr>'
+      ).join('');
+
+      // Por tipo de evento - ativo que mais pagou
+      const byTipo = {};
+      data.forEach(d => {
+        if (!byTipo[d.TipoEvento]) byTipo[d.TipoEvento] = {};
+        if (!byTipo[d.TipoEvento][d.Codigo]) byTipo[d.TipoEvento][d.Codigo] = { codigo: d.Codigo, descricao: d.Descricao, total: 0 };
+        byTipo[d.TipoEvento][d.Codigo].total += d.ValorLiquido;
+      });
+      const tiposOrder = ['Dividendo', 'Juros Sobre Capital Próprio', 'Rendimento'];
+      const tipoKeys = Object.keys(byTipo).sort((a, b) => tiposOrder.indexOf(a) - tiposOrder.indexOf(b));
+      document.getElementById('porTipoContainer').innerHTML = tipoKeys.map(t => {
+        const top = Object.values(byTipo[t]).sort((a, b) => b.total - a.total)[0];
+        return '<div class="cat-card"><div class="cat-label">' + t + '</div><div class="cat-asset">' + (top ? top.codigo : '-') + '</div><div class="cat-desc">' + (top ? top.descricao : '') + '</div><div class="cat-value">' + (top ? fmt(top.total) : '-') + '</div></div>';
+      }).join('');
+
+      // Por ano - ativo que mais pagou
+      const byAno = {};
+      data.forEach(d => {
+        if (!byAno[d.Ano]) byAno[d.Ano] = {};
+        if (!byAno[d.Ano][d.Codigo]) byAno[d.Ano][d.Codigo] = { codigo: d.Codigo, descricao: d.Descricao, total: 0 };
+        byAno[d.Ano][d.Codigo].total += d.ValorLiquido;
+      });
+      const anosSorted = Object.keys(byAno).sort();
+      document.getElementById('porAnoContainer').innerHTML = anosSorted.map(a => {
+        const top = Object.values(byAno[a]).sort((x, y) => y.total - x.total)[0];
+        return '<div class="ano-card"><div class="ano-year">' + a + '</div><div class="ano-asset">' + (top ? top.codigo : '-') + '</div><div class="ano-value">' + (top ? fmt(top.total) : '-') + '</div></div>';
+      }).join('');
+
+      // Donut charts
+      updateDonutChart('donutTipo', 'Tipo de Evento', data, 'TipoEvento');
+      updateDonutChart('donutInst', 'Instituição', data, 'Instituicao');
+
+      // Line chart
+      updateLineChart();
+
+      // Data table
+      renderDataTable(data);
+    }
+
+    function updateDonutChart(canvasId, label, data, field) {
+      const ctx = document.getElementById(canvasId);
+      if (!ctx) return;
+
+      const groups = {};
+      data.forEach(d => {
+        const k = d[field];
+        groups[k] = (groups[k] || 0) + d.ValorLiquido;
+      });
+      const entries = Object.entries(groups).sort((a, b) => b[1] - a[1]);
+      const labels = entries.map(e => e[0]);
+      const values = entries.map(e => e[1]);
+      const total = values.reduce((s, v) => s + v, 0);
+
+      const colors = ['#6c63ff', '#ff6584', '#00d4aa', '#fbbf24', '#f97316', '#a855f7', '#06b6d4', '#ec4899', '#10b981', '#f59e0b'];
+
+      if (charts[canvasId]) {
+        charts[canvasId].data.labels = labels;
+        charts[canvasId].data.datasets[0].data = values;
+        charts[canvasId].data.datasets[0].backgroundColor = colors.slice(0, labels.length);
+        charts[canvasId].update('none');
+        return;
+      }
+
+      const dm = isDarkMode();
+      const lblColor = dm ? '#c8c8d8' : '#555570';
+      const tooltipBg = dm ? 'rgba(20,20,30,0.92)' : 'rgba(0,0,0,0.8)';
+
+      charts[canvasId] = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels,
+          datasets: [{
+            data: values,
+            backgroundColor: colors.slice(0, labels.length),
+            borderWidth: 2,
+            borderColor: 'transparent',
+            hoverOffset: 12
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '60%',
+          animation: {
+            animateRotate: true,
+            duration: 1000
+          },
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                color: lblColor,
+                font: { family: 'Inter', size: 10 },
+                padding: 12,
+                usePointStyle: true,
+                generateLabels: function (chart) {
+                  return chart.data.labels.map((l, i) => ({
+                    text: l + ' (' + chart.data.datasets[0].data[i].toFixed(2) + ') ' +
+                      (chart.data.datasets[0].data[i] / chart.data.datasets[0].data.reduce((a, b) => a + b, 0) * 100).toFixed(1) + '%',
+                    fillStyle: colors[i % colors.length],
+                    strokeStyle: 'transparent',
+                    pointStyle: 'circle',
+                    index: i
+                  }));
+                }
+              }
+            },
+            tooltip: {
+              backgroundColor: tooltipBg,
+              titleColor: dm ? '#f0f0f5' : '#fff',
+              bodyColor: dm ? '#f0f0f5' : '#fff',
+              titleFont: { family: 'Inter', size: 12 },
+              bodyFont: { family: 'Inter', size: 11 },
+              padding: 10,
+              cornerRadius: 8,
+              callbacks: {
+                label: function (ctx) {
+                  const val = ctx.raw;
+                  const pct = (val / total * 100).toFixed(1);
+                  return ctx.label + ': ' + fmt(val) + ' (' + pct + '%)';
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function updateLineChart() {
+      const ctx = document.getElementById('lineChart');
+      if (!ctx) return;
+
+      const filterAno = document.getElementById('lineFilterAno').value;
+
+      let data = filteredData;
+      if (filterAno) data = data.filter(d => d.Ano === filterAno);
+
+      let groups = {};
+      if (filterAno) {
+        data.forEach(d => {
+          const k = d.Mes;
+          groups[k] = (groups[k] || 0) + d.ValorLiquido;
+        });
+        const sorted = MONTH_ORDER.filter(m => groups[m] !== undefined);
+        renderLine(ctx, sorted, sorted.map(m => groups[m]), filterAno);
+      } else {
+        data.forEach(d => {
+          const k = d.Ano;
+          groups[k] = (groups[k] || 0) + d.ValorLiquido;
+        });
+        const sorted = Object.keys(groups).sort();
+        renderLine(ctx, sorted, sorted.map(y => groups[y]), '');
+      }
+    }
+
+    function renderLine(ctx, labels, values, subtitle) {
+      const dm = isDarkMode();
+      const gridColor = dm ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+      const textColor = dm ? '#c8c8d8' : '#555570';
+      const tooltipBg = dm ? 'rgba(20,20,30,0.92)' : 'rgba(0,0,0,0.8)';
+      const pointBorder = dm ? '#1a1a2e' : '#fff';
+
+      if (charts['lineChart']) {
+        charts['lineChart'].data.labels = labels;
+        charts['lineChart'].data.datasets[0].data = values;
+        charts['lineChart'].update('none');
+        return;
+      }
+
+      const grad = ctx.getContext('2d').createLinearGradient(0, 0, 0, 300);
+      grad.addColorStop(0, 'rgba(108,99,255,0.3)');
+      grad.addColorStop(1, 'rgba(108,99,255,0.0)');
+
+      charts['lineChart'] = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Valor Recebido',
+            data: values,
+            borderColor: '#6c63ff',
+            backgroundColor: grad,
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: '#6c63ff',
+            pointBorderColor: pointBorder,
+            pointBorderWidth: 2,
+            pointRadius: 4,
+            pointHoverRadius: 7,
+            borderWidth: 3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: { duration: 800 },
+          interaction: {
+            mode: 'index',
+            intersect: false
+          },
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              backgroundColor: tooltipBg,
+              titleColor: dm ? '#f0f0f5' : '#fff',
+              bodyColor: dm ? '#f0f0f5' : '#fff',
+              titleFont: { family: 'Inter', size: 12 },
+              bodyFont: { family: 'Inter', size: 11 },
+              padding: 10,
+              cornerRadius: 8,
+              callbacks: {
+                label: function (ctx) {
+                  return fmt(ctx.raw);
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: gridColor, drawBorder: false },
+              ticks: { color: textColor, font: { family: 'Inter', size: 11 } }
+            },
+            y: {
+              grid: { color: gridColor, drawBorder: false },
+              ticks: {
+                color: textColor,
+                font: { family: 'Inter', size: 11 },
+                callback: function (val) { return 'R$ ' + val.toFixed(0); }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function renderDataTable(data) {
+      const head = document.getElementById('dataTableHead');
+      const body = document.getElementById('dataTableBody');
+      const pag = document.getElementById('dataTablePagination');
+
+      const cols = [
+        { key: 'Ano', label: 'Ano' },
+        { key: 'Mes', label: 'Mês' },
+        { key: 'Codigo', label: 'Código' },
+        { key: 'Descricao', label: 'Descrição' },
+        { key: 'Pagamento', label: 'Pagamento' },
+        { key: 'TipoEvento', label: 'Tipo de Evento' },
+        { key: 'Instituicao', label: 'Instituição' },
+        { key: 'Quantidade', label: 'Quantidade' },
+        { key: 'PrecoUnitario', label: 'Preço unitário' },
+        { key: 'ValorLiquido', label: 'Valor líquido' }
+      ];
+
+      if (data.length === 0) {
+        head.innerHTML = '<th>Nenhum dado</th>';
+        body.innerHTML = '';
+        pag.innerHTML = '';
+        return;
+      }
+
+      // Build sorted data
+      let sorted = [...data];
+      if (dataTableSort.col >= 0) {
+        const k = cols[dataTableSort.col].key;
+        sorted.sort((a, b) => {
+          let va = a[k], vb = b[k];
+          if (typeof va === 'string') va = va.toLowerCase();
+          if (typeof vb === 'string') vb = vb.toLowerCase();
+          if (va < vb) return dataTableSort.asc ? -1 : 1;
+          if (va > vb) return dataTableSort.asc ? 1 : -1;
+          return 0;
+        });
+      }
+
+      const totalPages = Math.ceil(sorted.length / PAGE_SIZE);
+      if (dataTablePage >= totalPages) dataTablePage = totalPages - 1;
+      if (dataTablePage < 0) dataTablePage = 0;
+      const start = dataTablePage * PAGE_SIZE;
+      const pageData = sorted.slice(start, start + PAGE_SIZE);
+
+      // Header with sort arrows
+      head.innerHTML = cols.map((c, i) => {
+        let arrow = '';
+        if (dataTableSort.col === i) {
+          arrow = dataTableSort.asc ? ' &#x25B2;' : ' &#x25BC;';
+        }
+        return '<th onclick="sortDataTable(' + i + ')" style="cursor:pointer;user-select:none">' + c.label + arrow + '</th>';
+      }).join('');
+
+      // Body
+      body.innerHTML = pageData.map(d => {
+        const vals = [
+          d.Ano, d.Mes, d.Codigo, d.Descricao,
+          excelSerialToDate(d.Pagamento),
+          d.TipoEvento, d.Instituicao,
+          d.Quantidade,
+          'R$ ' + (d.PrecoUnitario || 0).toFixed(2).replace('.', ','),
+          'R$ ' + d.ValorLiquido.toFixed(2).replace('.', ',')
+        ];
+        return '<tr>' + vals.map(v => '<td>' + v + '</td>').join('') + '</tr>';
+      }).join('');
+
+      // Pagination
+      pag.innerHTML = '';
+      if (totalPages <= 1) return;
+
+      const info = document.createElement('span');
+      info.textContent = (start + 1) + '-' + Math.min(start + PAGE_SIZE, sorted.length) + ' de ' + sorted.length;
+
+      const nav = document.createElement('div');
+      nav.style.display = 'flex';
+      nav.style.gap = '6px';
+      nav.style.alignItems = 'center';
+
+      const btnPrev = document.createElement('button');
+      btnPrev.textContent = '\u25C0';
+      btnPrev.className = 'btn-clear';
+      btnPrev.style.padding = '4px 10px';
+      btnPrev.style.fontSize = '0.75rem';
+      btnPrev.disabled = dataTablePage === 0;
+      btnPrev.onclick = () => { dataTablePage--; renderDataTable(data); };
+
+      const btnNext = document.createElement('button');
+      btnNext.textContent = '\u25B6';
+      btnNext.className = 'btn-clear';
+      btnNext.style.padding = '4px 10px';
+      btnNext.style.fontSize = '0.75rem';
+      btnNext.disabled = dataTablePage >= totalPages - 1;
+      btnNext.onclick = () => { dataTablePage++; renderDataTable(data); };
+
+      nav.appendChild(btnPrev);
+
+      // Page numbers
+      const maxPageBtns = 5;
+      let pStart = Math.max(0, dataTablePage - Math.floor(maxPageBtns / 2));
+      let pEnd = Math.min(totalPages, pStart + maxPageBtns);
+      if (pEnd - pStart < maxPageBtns) pStart = Math.max(0, pEnd - maxPageBtns);
+
+      for (let p = pStart; p < pEnd; p++) {
+        const btn = document.createElement('button');
+        btn.textContent = p + 1;
+        btn.className = 'btn-clear';
+        btn.style.padding = '4px 8px';
+        btn.style.fontSize = '0.75rem';
+        btn.style.fontWeight = p === dataTablePage ? '700' : '400';
+        btn.style.borderColor = p === dataTablePage ? 'var(--accent-1)' : 'var(--border)';
+        btn.onclick = () => { dataTablePage = p; renderDataTable(data); };
+        nav.appendChild(btn);
+      }
+
+      nav.appendChild(btnNext);
+
+      pag.appendChild(info);
+      pag.appendChild(nav);
+    }
+
+    function sortDataTable(col) {
+      if (dataTableSort.col === col) {
+        dataTableSort.asc = !dataTableSort.asc;
+      } else {
+        dataTableSort.col = col;
+        dataTableSort.asc = true;
+      }
+      dataTablePage = 0;
+      renderDataTable(filteredData);
+    }
+
+    // Redraw charts on theme change
+    const themeObserver = new MutationObserver(() => {
+      if (filteredData.length === 0) return;
+      setTimeout(() => {
+        Object.keys(charts).forEach(k => { try { charts[k].destroy(); } catch (e) { } });
+        charts = {};
+        updateDonutChart('donutTipo', 'Tipo de Evento', filteredData, 'TipoEvento');
+        updateDonutChart('donutInst', 'Instituição', filteredData, 'Instituicao');
+        updateLineChart();
+      }, 100);
+    });
+    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  </script>
+
+</body>
+
+</html>
